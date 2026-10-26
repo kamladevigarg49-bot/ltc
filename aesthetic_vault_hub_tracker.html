@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CYBER-SAKURA // Vault & Blockchain Explorer</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- QRCode.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            obsidian: {
+              950: '#040206',
+              900: '#08050c',
+              850: '#0d0714',
+              800: '#140c1e',
+              700: '#1c102b',
+              600: '#28173d'
+            },
+            cyberpink: {
+              50: '#ffe6f1',
+              100: '#ffb3d6',
+              200: '#ff80bd',
+              300: '#ff4da4',
+              400: '#ff1a8c',
+              500: '#ff007f', // Primary Neon Hot Pink
+              600: '#e60073',
+              700: '#cc0066',
+              800: '#99004d',
+              900: '#660033',
+              neon: '#ff2a85',
+              glow: '#ff007f'
+            }
+          },
+          fontFamily: {
+            sans: ['Space Grotesk', 'Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'monospace']
+          },
+          boxShadow: {
+            'pink-glow-sm': '0 0 15px rgba(255, 0, 127, 0.25)',
+            'pink-glow-md': '0 0 25px rgba(255, 0, 127, 0.45)',
+            'pink-glow-lg': '0 0 45px rgba(255, 0, 127, 0.65)',
+            'pink-inset': 'inset 0 0 20px rgba(255, 0, 127, 0.2)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+    :root {
+      --bg-dark: #050308;
+      --neon-pink: #ff007f;
+      --neon-pink-soft: rgba(255, 0, 127, 0.18);
+      --card-bg: rgba(14, 8, 22, 0.88);
+    }
+
+    * {
+      border-color: rgba(255, 0, 127, 0.22);
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: #ffd6eb;
+      font-family: 'Space Grotesk', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Strict no-white rule */
+    input, select, textarea, button, div, span, table, td, th {
+      color-scheme: dark;
+    }
+
+    /* Interactive Particle Canvas */
+    #cyber-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      pointer-events: auto;
+    }
+
+    .app-root {
+      position: relative;
+      z-index: 10;
+    }
+
+    /* Cyber Glass Styling */
+    .cyber-panel {
+      background: rgba(14, 8, 22, 0.82);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 0, 127, 0.32);
+      box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.9), 0 0 25px rgba(255, 0, 127, 0.12);
+    }
+
+    .cyber-card {
+      background: rgba(20, 11, 31, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 0, 127, 0.24);
+      box-shadow: inset 0 0 12px rgba(255, 0, 127, 0.05);
+    }
+
+    .cyber-card:hover {
+      border-color: rgba(255, 0, 127, 0.65);
+      box-shadow: 0 0 20px rgba(255, 0, 127, 0.25), inset 0 0 15px rgba(255, 0, 127, 0.1);
+    }
+
+    .cyber-input {
+      background: rgba(10, 5, 16, 0.92);
+      border: 1.5px solid rgba(255, 0, 127, 0.35);
+      color: #ffb8dc;
+      transition: all 0.2s ease;
+    }
+    .cyber-input:focus {
+      outline: none;
+      border-color: #ff007f;
+      box-shadow: 0 0 15px rgba(255, 0, 127, 0.45);
+      background: rgba(18, 9, 29, 0.95);
+    }
+
+    .btn-cyber-pink {
+      background: linear-gradient(135deg, #ff007f 0%, #e60067 50%, #99004d 100%);
+      border: 1px solid #ff4da4;
+      color: #ffffff;
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+      box-shadow: 0 0 20px rgba(255, 0, 127, 0.45);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .btn-cyber-pink:hover {
+      background: linear-gradient(135deg, #ff2a85 0%, #ff007f 50%, #cc0066 100%);
+      box-shadow: 0 0 30px rgba(255, 0, 127, 0.8);
+      transform: translateY(-1.5px);
+    }
+    .btn-cyber-pink:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    .btn-cyber-ghost {
+      background: rgba(26, 12, 38, 0.7);
+      border: 1px solid rgba(255, 0, 127, 0.3);
+      color: #ff99cc;
+      transition: all 0.2s ease;
+    }
+    .btn-cyber-ghost:hover {
+      background: rgba(45, 18, 66, 0.85);
+      border-color: #ff007f;
+      color: #ffffff;
+      box-shadow: 0 0 15px rgba(255, 0, 127, 0.35);
+    }
+
+    /* Pulse & glow animations */
+    @keyframes neonPulse {
+      0%, 100% { filter: drop-shadow(0 0 8px rgba(255, 0, 127, 0.5)); }
+      50% { filter: drop-shadow(0 0 18px rgba(255, 0, 127, 0.9)); }
+    }
+    .neon-glow-anim {
+      animation: neonPulse 3s infinite ease-in-out;
+    }
+
+    @keyframes shakeError {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+    .shake-anim {
+      animation: shakeError 0.4s ease-in-out;
+    }
+
+    /* Deep Cyber Pink Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #08040d; }
+    ::-webkit-scrollbar-thumb { background: #660033; border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #ff007f; }
+  </style>
+</head>
+<body class="selection:bg-cyberpink-500 selection:text-white">
+
+  <!-- Interactive Constellation Particles Canvas -->
+  <canvas id="cyber-canvas"></canvas>
+
+  <div class="app-root min-h-screen flex flex-col">
+
+    <!-- Cyber Toast Alert -->
+    <div id="cyber-toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-50 transform -translate-y-28 opacity-0 pointer-events-none transition-all duration-300 flex items-center gap-3.5 bg-obsidian-900 border-2 border-cyberpink-500 text-pink-100 px-6 py-3.5 rounded-2xl shadow-pink-glow-md">
+      <div class="p-2 rounded-xl bg-obsidian-800 text-cyberpink-400 border border-cyberpink-700/50">
+        <i data-lucide="zap" class="w-5 h-5"></i>
+      </div>
+      <div>
+        <div id="toast-title" class="text-[10px] uppercase tracking-widest font-mono font-bold text-cyberpink-400">STATUS UPDATE</div>
+        <div id="toast-msg" class="text-sm font-bold text-pink-100">Operation Successful</div>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- SCREEN 1: LOGIN ACCESS GATE (PASSWORD: uniquee) -->
+    <!-- ======================================================== -->
+    <div id="screen-login" class="min-h-screen flex items-center justify-center p-4">
+      <div class="w-full max-w-md relative">
+        <!-- Pink Glow Rings -->
+        <div class="absolute -top-16 -left-16 w-48 h-48 bg-cyberpink-500/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-16 -right-16 w-52 h-52 bg-cyberpink-700/25 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div id="login-box" class="cyber-panel rounded-3xl p-8 sm:p-10 border border-cyberpink-500/50 shadow-pink-glow-md text-center space-y-6 relative">
+          
+          <div class="inline-flex relative">
+            <div class="p-4 rounded-2xl bg-obsidian-900 border-2 border-cyberpink-500 text-cyberpink-400 shadow-pink-glow-sm">
+              <i data-lucide="terminal" class="w-10 h-10"></i>
+            </div>
+            <span class="absolute -top-1 -right-1 flex h-4 w-4">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyberpink-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-4 w-4 bg-cyberpink-500"></span>
+            </span>
+          </div>
+
+          <div>
+            <h1 class="text-3xl font-black tracking-tight text-white flex items-center justify-center gap-2">
+              <span>CYBER</span><span class="text-cyberpink-500">VAULT</span>
+            </h1>
+            <p class="text-xs font-mono text-pink-300/70 mt-1">LTC Explorer & Deep Ledger Center</p>
+          </div>
+
+          <form onsubmit="handleAuth(event)" class="space-y-4">
+            <div class="relative text-left">
+              <label class="block text-[11px] font-mono uppercase tracking-wider text-pink-400/80 mb-1.5">Master Passkey</label>
+              <div class="relative">
+                <i data-lucide="key" class="w-4 h-4 text-cyberpink-400 absolute left-4 top-1/2 -translate-y-1/2"></i>
+                <input 
+                  type="password" 
+                  id="auth-input" 
+                  placeholder="Enter 'uniquee'..." 
+                  required
+                  class="cyber-input w-full rounded-2xl pl-11 pr-11 py-3 text-sm font-mono placeholder-pink-800 focus:outline-none"
+                />
+                <button type="button" onclick="togglePassVisibility()" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-pink-500 hover:text-white">
+                  <i id="eye-icon" data-lucide="eye" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+
+            <div id="auth-err" class="hidden text-xs font-mono font-bold text-rose-500 flex items-center justify-center gap-1.5">
+              <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+              <span>Access Denied: Key is 'uniquee'</span>
+            </div>
+
+            <button type="submit" class="btn-cyber-pink w-full py-3.5 rounded-2xl font-mono text-xs uppercase font-extrabold tracking-widest flex items-center justify-center gap-2">
+              <span>Initialize Terminal</span>
+              <i data-lucide="shield-check" class="w-4 h-4"></i>
+            </button>
+          </form>
+
+          <div class="pt-2 text-[11px] font-mono text-pink-400/60 flex items-center justify-center gap-2 border-t border-cyberpink-900/60">
+            <span class="w-2 h-2 rounded-full bg-cyberpink-500"></span>
+            <span>Password required: <strong class="text-cyberpink-400">uniquee</strong></span>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- SCREEN 2: MAIN CYBER DASHBOARD -->
+    <!-- ======================================================== -->
+    <div id="screen-dashboard" class="hidden flex-1 flex flex-col">
+      
+      <!-- Top Cyber Nav -->
+      <header class="sticky top-0 z-40 bg-obsidian-950/85 backdrop-blur-2xl border-b border-cyberpink-600/40 shadow-pink-glow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+          
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-obsidian-900 border border-cyberpink-500 text-cyberpink-400 flex items-center justify-center font-mono font-bold text-lg shadow-pink-glow-sm">
+              Ł
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-sm sm:text-base font-black tracking-wide text-white">CYBER<span class="text-cyberpink-500">SAKURA</span></span>
+                <span class="px-2 py-0.5 text-[9px] font-mono font-bold rounded-md bg-cyberpink-950/90 text-cyberpink-300 border border-cyberpink-700/60 flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-cyberpink-500 animate-ping"></span>
+                  MAINNET ACTIVE
+                </span>
+              </div>
+              <p class="text-[10px] font-mono text-pink-400/60 hidden sm:block">Zero-White Cyber Architecture</p>
+            </div>
+          </div>
+
+          <!-- Currency Toggles & Session Controls -->
+          <div class="flex items-center gap-2 sm:gap-3">
+            <div class="p-1 rounded-xl bg-obsidian-900 border border-cyberpink-800/80 flex items-center">
+              <button id="view-toggle-ltc" onclick="switchMainView('ltc')" class="px-3 py-1 rounded-lg text-xs font-mono font-bold bg-cyberpink-600 text-white shadow-pink-glow-sm transition">
+                Ł LTC
+              </button>
+              <button id="view-toggle-upi" onclick="switchMainView('upi')" class="px-3 py-1 rounded-lg text-xs font-mono font-bold text-pink-400 hover:text-white transition">
+                ₹ UPI / INR
+              </button>
+            </div>
+
+            <button onclick="openAddAddressModal()" class="btn-cyber-ghost px-3 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5">
+              <i data-lucide="user-plus" class="w-3.5 h-3.5 text-cyberpink-400"></i>
+              <span class="hidden md:inline">Save Contact</span>
+            </button>
+
+            <button onclick="logoutSession()" title="Lock Vault" class="p-2 rounded-xl bg-obsidian-900 border border-cyberpink-800 text-pink-400 hover:text-white hover:border-cyberpink-500 transition">
+              <i data-lucide="lock" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+        </div>
+      </header>
+
+      <!-- Main Shell -->
+      <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+        <!-- ============================================== -->
+        <!-- UNIVERSAL A-TO-Z SEARCH SYSTEM -->
+        <!-- ============================================== -->
+        <section class="cyber-panel rounded-3xl p-5 sm:p-6 border border-cyberpink-500/60 shadow-pink-glow-md space-y-4">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+            <div>
+              <div class="flex items-center gap-2">
+                <i data-lucide="search" class="w-5 h-5 text-cyberpink-400"></i>
+                <h2 class="text-sm sm:text-base font-black tracking-wide text-white uppercase">A-TO-Z Live Blockchain & Ledger Explorer</h2>
+              </div>
+              <p class="text-xs font-mono text-pink-400/70">Paste ANY arbitrary Litecoin address or UPI handle to fetch full balance & historical logs.</p>
+            </div>
+
+            <!-- Dual Live Price Ticker & Global Currency Display Toggle -->
+            <div class="flex flex-wrap items-center gap-2">
+              <span id="price-coingecko" class="px-3 py-1.5 rounded-xl bg-obsidian-900 border border-cyberpink-800 text-xs font-mono text-emerald-400 font-bold flex items-center gap-1.5 shadow-pink-glow-sm">
+                <i data-lucide="trending-up" class="w-3.5 h-3.5 text-cyberpink-400"></i>
+                <span id="price-ticker-text">1 LTC ≈ $--.-- USD | ₹--,--- INR</span>
+              </span>
+
+              <!-- Global Currency Switcher: USD ($) vs INR (₹) -->
+              <div class="p-1 rounded-xl bg-obsidian-900 border border-cyberpink-700 flex items-center shadow-pink-glow-sm">
+                <button id="curr-toggle-usd" onclick="setGlobalCurrency('usd')" class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-cyberpink-600 text-white transition">
+                  $ USD
+                </button>
+                <button id="curr-toggle-inr" onclick="setGlobalCurrency('inr')" class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold text-pink-400 hover:text-white transition">
+                  ₹ INR
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Search Input Form -->
+          <div class="flex flex-col sm:flex-row gap-2">
+            <div class="relative flex-1">
+              <input 
+                type="text" 
+                id="search-input" 
+                placeholder="Paste any LTC address (e.g., LNnJKsd3...) or UPI VPA..." 
+                class="cyber-input w-full rounded-2xl pl-4 pr-10 py-3.5 text-xs sm:text-sm font-mono placeholder-pink-900/80 focus:outline-none"
+              />
+              <button onclick="clearSearchInput()" class="absolute right-3 top-1/2 -translate-y-1/2 text-pink-700 hover:text-pink-300">
+                <i data-lucide="x" class="w-4 h-4"></i>
+              </button>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button onclick="executeSearch()" class="btn-cyber-pink px-6 py-3.5 rounded-2xl font-mono text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 flex-1 sm:flex-initial">
+                <i data-lucide="radar" class="w-4 h-4"></i>
+                <span>Search A-Z</span>
+              </button>
+              
+              <!-- Saved quick-pick dropdown -->
+              <select id="quick-pick-select" onchange="pickSavedAddress(this.value)" class="cyber-input rounded-2xl px-3 py-3.5 text-xs font-mono text-pink-300 focus:outline-none cursor-pointer">
+                <option value="">Quick Select...</option>
+                <option value="LNnJKsd3cQLcdMezUov2KzQ2VtMmGocAc6">★ Primary LTC (LNnJKsd3c...)</option>
+                <option value="wannabenaman@fam">★ Primary UPI (wannabenaman@fam)</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- TWO PRIMARY ADDRESSES (LTC & UPI) HERO CARDS -->
+        <!-- ============================================== -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          
+          <!-- Primary LTC Card with Live USD / INR Value Tag -->
+          <div class="cyber-card rounded-3xl p-5 border-2 border-cyberpink-500/50 shadow-pink-glow-sm relative overflow-hidden flex flex-col justify-between">
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-cyberpink-500 shadow-pink-glow-sm animate-pulse"></span>
+                <span class="text-xs font-mono font-black text-cyberpink-400 uppercase tracking-wider">Primary Litecoin ID</span>
+              </div>
+              
+              <!-- Mini Currency Quick Pill in LTC Card -->
+              <div class="flex items-center gap-1.5">
+                <div class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-obsidian-900 text-cyberpink-300 border border-cyberpink-800 flex items-center gap-1">
+                  <span id="primary-ltc-fiat-badge">≈ $-- USD</span>
+                </div>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyberpink-950 text-cyberpink-300 border border-cyberpink-700">
+                  HARDCODED #1
+                </span>
+              </div>
+            </div>
+
+            <div onclick="quickCopyAddress('LNnJKsd3cQLcdMezUov2KzQ2VtMmGocAc6', 'Primary LTC')" class="cursor-pointer group bg-obsidian-900/90 border border-cyberpink-800 hover:border-cyberpink-500 p-3.5 rounded-2xl transition duration-200 mb-4">
+              <div class="flex items-center justify-between gap-3">
+                <div class="overflow-hidden">
+                  <div class="font-mono text-xs sm:text-sm font-bold text-white break-all group-hover:text-cyberpink-300 transition">
+                    LNnJKsd3cQLcdMezUov2KzQ2VtMmGocAc6
+                  </div>
+                  <div class="text-[10px] font-mono text-pink-400/60 mt-1 flex items-center gap-1">
+                    <i data-lucide="zap" class="w-3 h-3 text-cyberpink-400"></i> Tap card: 2-Second Fast Copy
+                  </div>
+                </div>
+                <div class="p-2 rounded-xl bg-obsidian-800 text-cyberpink-400 group-hover:bg-cyberpink-600 group-hover:text-white transition shrink-0">
+                  <i data-lucide="copy" class="w-4 h-4"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button onclick="quickCopyAddress('LNnJKsd3cQLcdMezUov2KzQ2VtMmGocAc6', 'Primary LTC')" class="btn-cyber-pink flex-1 py-2.5 rounded-xl font-mono text-xs font-black uppercase flex items-center justify-center gap-1.5">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy LTC ID
+              </button>
+              <button onclick="inspectAddress('LNnJKsd3cQLcdMezUov2KzQ2VtMmGocAc6', 'ltc')" class="btn-cyber-ghost px-3.5 py-2.5 rounded-xl font-mono text-xs font-bold flex items-center gap-1">
+                <i data-lucide="eye" class="w-3.5 h-3.5 text-cyberpink-400"></i> Explore
+              </button>
+              <button onclick="openQrView('LNnJKsd3cQLcdMezUov2KzQ2VtMmGocAc6', 'Litecoin Primary')" class="btn-cyber-ghost px-3 py-2.5 rounded-xl font-mono text-xs font-bold">
+                <i data-lucide="qr-code" class="w-3.5 h-3.5 text-cyberpink-400"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Primary UPI / INR Card -->
+          <div class="cyber-card rounded-3xl p-5 border-2 border-cyberpink-500/50 shadow-pink-glow-sm relative overflow-hidden flex flex-col justify-between">
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-pink-glow-sm animate-pulse"></span>
+                <span class="text-xs font-mono font-black text-emerald-400 uppercase tracking-wider">Primary UPI / INR ID</span>
+              </div>
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-obsidian-900 text-emerald-300 border border-emerald-700/60">
+                HARDCODED #2
+              </span>
+            </div>
+
+            <div onclick="quickCopyAddress('wannabenaman@fam', 'Primary UPI')" class="cursor-pointer group bg-obsidian-900/90 border border-cyberpink-800 hover:border-cyberpink-500 p-3.5 rounded-2xl transition duration-200 mb-4">
+              <div class="flex items-center justify-between gap-3">
+                <div class="overflow-hidden">
+                  <div class="font-mono text-base sm:text-lg font-bold text-white break-all group-hover:text-cyberpink-300 transition">
+                    wannabenaman@fam
+                  </div>
+                  <div class="text-[10px] font-mono text-pink-400/60 mt-1 flex items-center gap-1">
+                    <i data-lucide="zap" class="w-3 h-3 text-emerald-400"></i> Tap card: 2-Second Fast Copy
+                  </div>
+                </div>
+                <div class="p-2 rounded-xl bg-obsidian-800 text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white transition shrink-0">
+                  <i data-lucide="copy" class="w-4 h-4"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button onclick="quickCopyAddress('wannabenaman@fam', 'Primary UPI')" class="btn-cyber-pink flex-1 py-2.5 rounded-xl font-mono text-xs font-black uppercase flex items-center justify-center gap-1.5">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy UPI ID
+              </button>
+              <button onclick="inspectAddress('wannabenaman@fam', 'upi')" class="btn-cyber-ghost px-3.5 py-2.5 rounded-xl font-mono text-xs font-bold flex items-center gap-1">
+                <i data-lucide="eye" class="w-3.5 h-3.5 text-cyberpink-400"></i> Explore
+              </button>
+              <button onclick="openQrView('upi://pay?pa=wannabenaman@fam&pn=Naman&cu=INR', 'UPI Primary VPA')" class="btn-cyber-ghost px-3 py-2.5 rounded-xl font-mono text-xs font-bold">
+                <i data-lucide="qr-code" class="w-3.5 h-3.5 text-cyberpink-400"></i>
+              </button>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ============================================== -->
+        <!-- SAVED CONTACTS & SECONDARY ADDRESSES BOOK -->
+        <!-- ============================================== -->
+        <section class="cyber-panel rounded-3xl p-5 border border-cyberpink-800/80 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i data-lucide="bookmark" class="w-4 h-4 text-cyberpink-400"></i>
+              <h3 class="text-xs sm:text-sm font-mono font-bold text-white uppercase tracking-wider">Address Book & Secondary Wallets</h3>
+            </div>
+            <button onclick="openAddAddressModal()" class="text-xs font-mono font-bold text-cyberpink-400 hover:text-white flex items-center gap-1">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Add New
+            </button>
+          </div>
+
+          <div id="saved-addresses-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            <!-- Dynamically populated from LocalStorage -->
+          </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- SEARCH RESULTS / ACTIVE INSPECTOR PANEL -->
+        <!-- ============================================== -->
+        <section id="inspector-panel" class="cyber-panel rounded-3xl p-5 sm:p-6 border-2 border-cyberpink-500/70 shadow-pink-glow-md space-y-5">
+          
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-cyberpink-800/60 pb-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span id="inspect-type-pill" class="px-2 py-0.5 rounded text-[10px] font-mono font-black uppercase bg-cyberpink-950 text-cyberpink-300 border border-cyberpink-600">
+                  LTC BLOCKCHAIN
+                </span>
+                <span id="inspect-label" class="text-xs font-mono text-pink-400">Target Address</span>
+              </div>
+              <div id="inspect-address" class="text-sm sm:text-base font-mono font-black text-white break-all mt-1">
+                LNnJKsd3cQLcdMezUov2KzQ2VtMmGocAc6
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button onclick="copyCurrentInspected()" class="btn-cyber-ghost px-3 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Target
+              </button>
+              <button id="inspect-external-btn" onclick="openExternalExplorer()" class="btn-cyber-ghost px-3 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1">
+                <i data-lucide="external-link" class="w-3.5 h-3.5"></i> Explorer
+              </button>
+              <button onclick="reloadCurrentInspection()" class="btn-cyber-pink px-3 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1">
+                <i id="inspect-reload-spin" data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh
+              </button>
+            </div>
+          </div>
+
+          <!-- Inspector Statistics Cards (A to Z) -->
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <div class="cyber-card p-4 rounded-2xl relative">
+              <div class="flex items-center justify-between mb-1">
+                <div class="text-[10px] font-mono uppercase text-pink-400 font-bold">Live Balance</div>
+                <!-- Inline toggle for this card -->
+                <button onclick="toggleActiveCurrency()" class="text-[10px] font-mono text-cyberpink-400 hover:text-white transition underline">
+                  switch to <span id="stat-toggle-target">INR</span>
+                </button>
+              </div>
+              <div id="stat-balance" class="text-xl font-mono font-black text-white">0.0000 <span class="text-xs text-cyberpink-400">LTC</span></div>
+              <div id="stat-balance-fiat-primary" class="text-[12px] font-mono text-emerald-400 font-black mt-0.5">≈ $0.00 USD</div>
+              <div id="stat-balance-fiat-secondary" class="text-[10px] font-mono text-pink-400/60 mt-0.5">₹0.00 INR</div>
+            </div>
+
+            <div class="cyber-card p-4 rounded-2xl">
+              <div class="text-[10px] font-mono uppercase text-emerald-400 font-bold mb-1">Total A-Z Received</div>
+              <div id="stat-received" class="text-xl font-mono font-black text-emerald-400">+0.0000</div>
+              <div id="stat-received-fiat" class="text-[11px] font-mono text-emerald-300 font-semibold mt-0.5">≈ $0.00</div>
+              <div id="stat-received-sub" class="text-[10px] font-mono text-pink-400/60 mt-0.5">0 transactions</div>
+            </div>
+
+            <div class="cyber-card p-4 rounded-2xl">
+              <div class="text-[10px] font-mono uppercase text-amber-400 font-bold mb-1">Mempool / Hold</div>
+              <div id="stat-hold" class="text-xl font-mono font-black text-amber-400">0.0000</div>
+              <div id="stat-hold-fiat" class="text-[11px] font-mono text-amber-300 font-semibold mt-0.5">≈ $0.00</div>
+              <div id="stat-hold-sub" class="text-[10px] font-mono text-amber-500/70 mt-0.5">0 unconfirmed</div>
+            </div>
+
+            <div class="cyber-card p-4 rounded-2xl">
+              <div class="text-[10px] font-mono uppercase text-rose-400 font-bold mb-1">Total A-Z Sent</div>
+              <div id="stat-sent" class="text-xl font-mono font-black text-rose-400">-0.0000</div>
+              <div id="stat-sent-fiat" class="text-[11px] font-mono text-rose-300 font-semibold mt-0.5">≈ $0.00</div>
+              <div id="stat-sent-sub" class="text-[10px] font-mono text-pink-400/60 mt-0.5">0 transactions</div>
+            </div>
+          </div>
+
+          <!-- A-to-Z Transactions Feed for Inspected Address -->
+          <div class="space-y-3 pt-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <i data-lucide="layers" class="w-4 h-4 text-cyberpink-400"></i>
+                <h4 class="text-xs font-mono font-bold text-white uppercase tracking-wider">A-to-Z Transaction History Log</h4>
+              </div>
+              <div class="flex items-center gap-1.5 text-xs font-mono">
+                <button onclick="filterLogs('all')" data-filter="all" class="log-filter-btn px-2.5 py-1 rounded-lg bg-cyberpink-600 text-white font-bold">ALL</button>
+                <button onclick="filterLogs('received')" data-filter="received" class="log-filter-btn px-2.5 py-1 rounded-lg bg-obsidian-900 text-pink-400 hover:text-white font-bold">RECEIVED</button>
+                <button onclick="filterLogs('hold')" data-filter="hold" class="log-filter-btn px-2.5 py-1 rounded-lg bg-obsidian-900 text-pink-400 hover:text-white font-bold">HOLD (0-CONF)</button>
+                <button onclick="filterLogs('sent')" data-filter="sent" class="log-filter-btn px-2.5 py-1 rounded-lg bg-obsidian-900 text-pink-400 hover:text-white font-bold">SENT</button>
+              </div>
+            </div>
+
+            <!-- Transaction Entries -->
+            <div id="logs-container" class="space-y-2">
+              <!-- Rendered via JS -->
+            </div>
+
+            <div id="logs-empty" class="hidden py-8 text-center text-xs font-mono text-pink-400/60 bg-obsidian-950/60 rounded-2xl border border-cyberpink-900/60">
+              No blockchain transactions found for this address.
+            </div>
+          </div>
+
+        </section>
+
+        <!-- UPI SMS Auto-Parser (Active only when inspecting UPI) -->
+        <section id="upi-parser-section" class="cyber-panel rounded-3xl p-5 border border-cyberpink-800/80 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i data-lucide="message-square-plus" class="w-4 h-4 text-cyberpink-400"></i>
+              <h4 class="text-xs font-mono font-bold text-white uppercase">Bank SMS / Statement Auto-Logger</h4>
+            </div>
+            <button onclick="openManualUpiModal()" class="btn-cyber-ghost px-2.5 py-1 rounded-lg text-xs font-mono font-bold">
+              + Manual Log
+            </button>
+          </div>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input 
+              type="text" 
+              id="sms-input-box" 
+              placeholder="Paste bank SMS: 'Rs. 2500 credited via UPI Ref 491028491...'" 
+              class="cyber-input flex-1 rounded-xl px-3 py-2.5 text-xs font-mono placeholder-pink-900/70 focus:outline-none"
+            />
+            <button onclick="parseAndLogSms()" class="btn-cyber-pink px-4 py-2.5 rounded-xl font-mono text-xs font-black uppercase flex items-center justify-center gap-1.5 shrink-0">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Parse & Save
+            </button>
+          </div>
+        </section>
+
+      </main>
+
+      <footer class="mt-auto border-t border-cyberpink-900/60 bg-obsidian-950 py-4 text-center text-[11px] font-mono text-pink-400/60">
+        CYBER-SAKURA VAULT // NO-WHITE DARK PROTOCOL // BLOCKCYPHER & BLOCKCHAIR NODES
+      </footer>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MODAL: ADD SECONDARY CONTACT / ADDRESS -->
+    <!-- ======================================================== -->
+    <div id="modal-add-address" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4">
+      <div class="cyber-panel max-w-md w-full p-6 rounded-3xl border border-cyberpink-500 shadow-pink-glow-lg space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i data-lucide="contact" class="w-5 h-5 text-cyberpink-400"></i>
+            <h3 class="text-sm font-mono font-bold text-white uppercase">Save Address / Contact</h3>
+          </div>
+          <button onclick="closeModal('modal-add-address')" class="text-pink-500 hover:text-white">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <form onsubmit="handleSaveAddress(event)" class="space-y-3.5">
+          <div>
+            <label class="block text-[10px] font-mono text-pink-400 uppercase mb-1">Type</label>
+            <select id="new-addr-type" class="cyber-input w-full rounded-xl p-2.5 text-xs font-mono">
+              <option value="ltc">Litecoin (LTC) Address</option>
+              <option value="upi">UPI / INR Handle</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-mono text-pink-400 uppercase mb-1">Alias / Label</label>
+            <input type="text" id="new-addr-alias" required placeholder="e.g. Cold Storage, Binance P2P, Client Rahul" class="cyber-input w-full rounded-xl p-2.5 text-xs font-mono focus:outline-none" />
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-mono text-pink-400 uppercase mb-1">Address / ID</label>
+            <input type="text" id="new-addr-val" required placeholder="LTC address or user@bank" class="cyber-input w-full rounded-xl p-2.5 text-xs font-mono focus:outline-none" />
+          </div>
+
+          <div class="pt-2 flex items-center justify-end gap-2">
+            <button type="button" onclick="closeModal('modal-add-address')" class="btn-cyber-ghost px-4 py-2 rounded-xl text-xs font-mono">Cancel</button>
+            <button type="submit" class="btn-cyber-pink px-5 py-2 rounded-xl text-xs font-mono font-bold uppercase">Save Contact</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MODAL: MANUAL UPI RECORD -->
+    <!-- ======================================================== -->
+    <div id="modal-manual-upi" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4">
+      <div class="cyber-panel max-w-md w-full p-6 rounded-3xl border border-cyberpink-500 shadow-pink-glow-lg space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-mono font-bold text-white uppercase">Manual UPI Payment Log</h3>
+          <button onclick="closeModal('modal-manual-upi')" class="text-pink-500 hover:text-white">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <form onsubmit="handleManualUpiSubmit(event)" class="space-y-3">
+          <div>
+            <label class="block text-[10px] font-mono text-pink-400 uppercase mb-1">Status</label>
+            <div class="grid grid-cols-3 gap-2">
+              <label><input type="radio" name="manual-upi-type" value="received" class="sr-only peer" checked><span class="block p-2 text-center rounded-xl border border-cyberpink-800 peer-checked:border-emerald-500 peer-checked:bg-emerald-950/50 text-xs font-mono text-emerald-400 cursor-pointer">Received</span></label>
+              <label><input type="radio" name="manual-upi-type" value="hold" class="sr-only peer"><span class="block p-2 text-center rounded-xl border border-cyberpink-800 peer-checked:border-amber-500 peer-checked:bg-amber-950/50 text-xs font-mono text-amber-400 cursor-pointer">On Hold</span></label>
+              <label><input type="radio" name="manual-upi-type" value="sent" class="sr-only peer"><span class="block p-2 text-center rounded-xl border border-cyberpink-800 peer-checked:border-rose-500 peer-checked:bg-rose-950/50 text-xs font-mono text-rose-400 cursor-pointer">Sent</span></label>
+            </div>
+          </div>
+          <div>
+            <label class="block text-[10px] font-mono text-pink-400 uppercase mb-1">Amount (₹)</label>
+            <input type="number" step="any" min="1" id="manual-upi-amount" required placeholder="0.00" class="cyber-input w-full rounded-xl p-2.5 text-xs font-mono" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-mono text-pink-400 uppercase mb-1">Note / Description</label>
+            <input type="text" id="manual-upi-note" required placeholder="Project payment, client transfer..." class="cyber-input w-full rounded-xl p-2.5 text-xs font-mono" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-mono text-pink-400 uppercase mb-1">Reference / UTR (Optional)</label>
+            <input type="text" id="manual-upi-ref" placeholder="Auto-generated if blank" class="cyber-input w-full rounded-xl p-2.5 text-xs font-mono" />
+          </div>
+          <div class="pt-2 flex justify-end gap-2">
+            <button type="button" onclick="closeModal('modal-manual-upi')" class="btn-cyber-ghost px-4 py-2 rounded-xl text-xs font-mono">Cancel</button>
+            <button type="submit" class="btn-cyber-pink px-5 py-2 rounded-xl text-xs font-mono font-bold uppercase">Save Entry</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MODAL: QR CODE DISPLAY (BLACK & PINK THEMED) -->
+    <!-- ======================================================== -->
+    <div id="modal-qr" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4">
+      <div class="cyber-panel max-w-xs w-full p-6 rounded-3xl border border-cyberpink-500 text-center space-y-4 shadow-pink-glow-lg">
+        <div class="flex items-center justify-between">
+          <span id="qr-title" class="text-xs font-mono font-bold text-cyberpink-400 uppercase">QR Code</span>
+          <button onclick="closeModal('modal-qr')" class="text-pink-500 hover:text-white">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Black & Pink styled QR Container -->
+        <div class="p-3 bg-obsidian-950 rounded-2xl border-2 border-cyberpink-500 inline-block shadow-pink-glow-sm">
+          <div id="qr-target-box" class="rounded-xl overflow-hidden p-1 bg-obsidian-900"></div>
+        </div>
+
+        <div class="text-[11px] font-mono text-pink-300 break-all bg-obsidian-900 p-2.5 rounded-xl border border-cyberpink-800" id="qr-val-text">
+          -
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="copyQrVal()" class="btn-cyber-pink py-2 rounded-xl text-xs font-mono font-bold">Copy</button>
+          <button onclick="closeModal('modal-qr')" class="btn-cyber-ghost py-2 rounded-xl text-xs font-mono">Close</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- SCRIPT: NEON PARTICLES & CONSTELLATION WEB ENGINE -->
+  <!-- ======================================================== -->
+  <script>
+    const canvas = document.getElementById('cyber-canvas');
+    const ctx = canvas.getContext('2d');
+
+    let particles = [];
+    const count = 55;
+    const maxDistance = 110;
+    let mouse = { x: null, y: null, radius: 120 };
+
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.x;
+      mouse.y = e.y;
+    });
+
+    window.addEventListener('mouseout', () => {
+      mouse.x = null;
+      mouse.y = null;
+    });
+
+    function initCanvasSize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', initCanvasSize);
+    initCanvasSize();
+
+    class CyberParticle {
+      constructor() {
+        this.reset();
+      }
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 0.9;
+        this.vy = (Math.random() - 0.5) * 0.9;
+        this.radius = Math.random() * 2 + 1;
+        this.baseColor = Math.random() > 0.4 ? '#ff007f' : '#ff4da4';
+        this.alpha = Math.random() * 0.6 + 0.3;
+      }
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        if (this.x < 0 || this.x > canvas.width) this.vx = -this.vx;
+        if (this.y < 0 || this.y > canvas.height) this.vy = -this.vy;
+
+        // Mouse repulsion
+        if (mouse.x !== null && mouse.y !== null) {
+          let dx = mouse.x - this.x;
+          let dy = mouse.y - this.y;
+          let distance = Math.hypot(dx, dy);
+          if (distance < mouse.radius) {
+            const angle = Math.atan2(dy, dx);
+            const force = (mouse.radius - distance) / mouse.radius;
+            this.x -= Math.cos(angle) * force * 3;
+            this.y -= Math.sin(angle) * force * 3;
+          }
+        }
+      }
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.baseColor;
+        ctx.shadowColor = '#ff007f';
+        ctx.shadowBlur = 10;
+        ctx.globalAlpha = this.alpha;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    for (let i = 0; i < count; i++) {
+      particles.push(new CyberParticle());
+    }
+
+    function renderParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw constellation links
+      for (let a = 0; a < particles.length; a++) {
+        for (let b = a + 1; b < particles.length; b++) {
+          let dist = Math.hypot(particles[a].x - particles[b].x, particles[a].y - particles[b].y);
+          if (dist < maxDistance) {
+            ctx.beginPath();
+            ctx.strokeStyle = '#ff007f';
+            ctx.globalAlpha = (1 - dist / maxDistance) * 0.22;
+            ctx.lineWidth = 0.8;
+            ctx.moveTo(particles[a].x, particles[a].y);
+            ctx.lineTo(particles[b].x, particles[b].y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+
+      requestAnimationFrame(renderParticles);
+    }
+    renderParticles();
+  </script>
+
+  <!-- ======================================================== -->
+  <!-- SCRIPT: AUDIO CHIMES & CONFETTI -->
+  <!-- ======================================================== -->
+  <script>
+    let audioCtx = null;
+    function getAudio() {
+      if (!audioCtx) {
+        const AudioClass = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioClass();
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function playCyberBeep(freq = 880, dur = 0.12) {
+      try {
+        const ctx = getAudio();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(0.18, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + dur);
+      } catch (e) {}
+    }
+
+    function playSuccessChime() {
+      try {
+        const ctx = getAudio();
+        const playTone = (freq, delay, dur) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + delay);
+          gain.gain.setValueAtTime(0.25, ctx.currentTime + delay);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + dur);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + delay);
+          osc.stop(ctx.currentTime + delay + dur);
+        };
+        playTone(659.25, 0.0, 0.12);
+        playTone(987.77, 0.1, 0.18);
+        playTone(1318.5, 0.2, 0.25);
+      } catch (e) {}
+    }
+
+    function fireNeonConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 40,
+          spread: 60,
+          origin: { y: 0.3 },
+          colors: ['#ff007f', '#ff4da4', '#e60073', '#ff80bd']
+        });
+      }
+    }
+  </script>
+
+  <!-- ======================================================== -->
+  <!-- SCRIPT: APPLICATION CORE LOGIC -->
+  <!-- ======================================================== -->
+  <script>
+    const MASTER_PASS = 'uniquee';
+    const PRIMARY_LTC = 'LNnJKsd3cQLcdMezUov2KzQ2VtMmGocAc6';
+    const PRIMARY_UPI = 'wannabenaman@fam';
+
+    const STORAGE_KEY_AUTH = 'cyber_auth_v5';
+    const STORAGE_KEY_CONTACTS = 'cyber_contacts_v5';
+    const STORAGE_KEY_UPI_LOGS = 'cyber_upi_logs_v5';
+    const STORAGE_KEY_CURR = 'cyber_active_curr_v5';
+
+    let currentInspected = {
+      address: PRIMARY_LTC,
+      type: 'ltc', // 'ltc' or 'upi'
+      label: 'Primary Litecoin ID'
+    };
+
+    let inspectedLogs = [];
+    let currentLogFilter = 'all';
+    let activeCurrency = localStorage.getItem(STORAGE_KEY_CURR) || 'usd'; // 'usd' or 'inr'
+    let ltcUsdPrice = 57.00; // live or fallback
+    let ltcInrPrice = 4850.00; // live or fallback
+    let lastKnownLtcTxCount = null;
+    let savedContacts = [];
+    let upiDatabase = {};
+    let activeQrValue = '';
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadStorage();
+      updateCurrencyToggleUI();
+      if (sessionStorage.getItem(STORAGE_KEY_AUTH) === 'true') {
+        showDashboard();
+      } else {
+        showLogin();
+      }
+      lucide.createIcons();
+
+      // Automatic 30-Second Polling for Fresh Payments
+      setInterval(() => {
+        if (sessionStorage.getItem(STORAGE_KEY_AUTH) === 'true') {
+          fetchLtcPrice();
+          if (currentInspected.type === 'ltc') {
+            fetchLtcBlockchainLogs(currentInspected.address, true);
+          }
+        }
+      }, 30000);
+    });
+
+    function loadStorage() {
+      const contactsStr = localStorage.getItem(STORAGE_KEY_CONTACTS);
+      savedContacts = contactsStr ? JSON.parse(contactsStr) : [
+        { type: 'ltc', alias: 'Cold Vault Storage', address: 'LTC_Cold_Storage_Demo' },
+        { type: 'upi', alias: 'Secondary UPI (Paytm)', address: 'naman@paytm' }
+      ];
+
+      const upiLogsStr = localStorage.getItem(STORAGE_KEY_UPI_LOGS);
+      upiDatabase = upiLogsStr ? JSON.parse(upiLogsStr) : {
+        [PRIMARY_UPI]: [
+          { id: '1', type: 'received', amount: 3500, note: 'Binance P2P / Freelance Dev', ref: 'UPI/4920194821', timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString() },
+          { id: '2', type: 'hold', amount: 1500, note: 'Pending Verification Hold', ref: 'UPI/4920100234', timestamp: new Date(Date.now() - 1000 * 60 * 180).toISOString() }
+        ]
+      };
+    }
+
+    function saveContactsStorage() {
+      localStorage.setItem(STORAGE_KEY_CONTACTS, JSON.stringify(savedContacts));
+    }
+
+    function saveUpiStorage() {
+      localStorage.setItem(STORAGE_KEY_UPI_LOGS, JSON.stringify(upiDatabase));
+    }
+
+    // ============================================
+    // CURRENCY SWITCHING SYSTEM (USD vs INR)
+    // ============================================
+    function setGlobalCurrency(curr) {
+      activeCurrency = curr;
+      localStorage.setItem(STORAGE_KEY_CURR, curr);
+      updateCurrencyToggleUI();
+      if (currentInspected.type === 'ltc') {
+        renderCurrentStatsValues();
+        renderLogs();
+      }
+    }
+
+    function toggleActiveCurrency() {
+      setGlobalCurrency(activeCurrency === 'usd' ? 'inr' : 'usd');
+    }
+
+    function updateCurrencyToggleUI() {
+      const usdBtn = document.getElementById('curr-toggle-usd');
+      const inrBtn = document.getElementById('curr-toggle-inr');
+      const targetLbl = document.getElementById('stat-toggle-target');
+
+      if (usdBtn && inrBtn) {
+        if (activeCurrency === 'usd') {
+          usdBtn.className = 'px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-cyberpink-600 text-white shadow-pink-glow-sm transition';
+          inrBtn.className = 'px-2.5 py-1 rounded-lg text-xs font-mono font-bold text-pink-400 hover:text-white transition';
+        } else {
+          inrBtn.className = 'px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-cyberpink-600 text-white shadow-pink-glow-sm transition';
+          usdBtn.className = 'px-2.5 py-1 rounded-lg text-xs font-mono font-bold text-pink-400 hover:text-white transition';
+        }
+      }
+
+      if (targetLbl) {
+        targetLbl.textContent = activeCurrency === 'usd' ? 'INR (₹)' : 'USD ($)';
+      }
+    }
+
+    function convertLtcToFiat(amountLtc) {
+      const valUsd = amountLtc * ltcUsdPrice;
+      const valInr = amountLtc * ltcInrPrice;
+      return {
+        usdFormatted: `$${valUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        inrFormatted: `₹${valInr.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        primaryFormatted: activeCurrency === 'usd' 
+          ? `$${valUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`
+          : `₹${valInr.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} INR`,
+        secondaryFormatted: activeCurrency === 'usd'
+          ? `₹${valInr.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} INR`
+          : `$${valUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`
+      };
+    }
+
+    // Cached inspected balance values for instantaneous currency toggles
+    let lastInspectedLtcStats = { balance: 0, received: 0, hold: 0, sent: 0 };
+
+    function renderCurrentStatsValues() {
+      if (currentInspected.type !== 'ltc') return;
+
+      const { balance, received, hold, sent } = lastInspectedLtcStats;
+      const convBal = convertLtcToFiat(balance);
+      const convRec = convertLtcToFiat(received);
+      const convHold = convertLtcToFiat(hold);
+      const convSent = convertLtcToFiat(sent);
+
+      document.getElementById('stat-balance-fiat-primary').textContent = `≈ ${convBal.primaryFormatted}`;
+      document.getElementById('stat-balance-fiat-secondary').textContent = convBal.secondaryFormatted;
+
+      document.getElementById('stat-received-fiat').textContent = `≈ ${activeCurrency === 'usd' ? convRec.usdFormatted : convRec.inrFormatted}`;
+      document.getElementById('stat-hold-fiat').textContent = `≈ ${activeCurrency === 'usd' ? convHold.usdFormatted : convHold.inrFormatted}`;
+      document.getElementById('stat-sent-fiat').textContent = `≈ ${activeCurrency === 'usd' ? convSent.usdFormatted : convSent.inrFormatted}`;
+
+      // Update primary LTC badge
+      const primaryBadge = document.getElementById('primary-ltc-fiat-badge');
+      if (primaryBadge) {
+        primaryBadge.textContent = `≈ ${activeCurrency === 'usd' ? convBal.usdFormatted : convBal.inrFormatted}`;
+      }
+    }
+
+    // ============================================
+    // AUTH GATE (Key: uniquee)
+    // ============================================
+    function handleAuth(e) {
+      e.preventDefault();
+      const input = document.getElementById('auth-input');
+      const err = document.getElementById('auth-err');
+      const box = document.getElementById('login-box');
+
+      if (input.value.trim() === MASTER_PASS) {
+        sessionStorage.setItem(STORAGE_KEY_AUTH, 'true');
+        err.classList.add('hidden');
+        playSuccessChime();
+        fireNeonConfetti();
+        showDashboard();
+      } else {
+        err.classList.remove('hidden');
+        box.classList.add('shake-anim');
+        playCyberBeep(220, 0.25);
+        setTimeout(() => box.classList.remove('shake-anim'), 400);
+      }
+    }
+
+    function togglePassVisibility() {
+      const inp = document.getElementById('auth-input');
+      const isPass = inp.type === 'password';
+      inp.type = isPass ? 'text' : 'password';
+      document.getElementById('eye-icon').setAttribute('data-lucide', isPass ? 'eye-off' : 'eye');
+      lucide.createIcons();
+    }
+
+    function logoutSession() {
+      sessionStorage.removeItem(STORAGE_KEY_AUTH);
+      document.getElementById('auth-input').value = '';
+      showLogin();
+    }
+
+    function showLogin() {
+      document.getElementById('screen-login').classList.remove('hidden');
+      document.getElementById('screen-dashboard').classList.add('hidden');
+    }
+
+    function showDashboard() {
+      document.getElementById('screen-login').classList.add('hidden');
+      document.getElementById('screen-dashboard').classList.remove('hidden');
+
+      fetchLtcPrice();
+      renderSavedContacts();
+      inspectAddress(PRIMARY_LTC, 'ltc', 'Primary Litecoin ID');
+      lucide.createIcons();
+    }
+
+    // ============================================
+    // ADDRESS BOOK SYSTEM
+    // ============================================
+    function renderSavedContacts() {
+      const container = document.getElementById('saved-addresses-grid');
+      const quickSelect = document.getElementById('quick-pick-select');
+
+      quickSelect.innerHTML = `
+        <option value="">Quick Select...</option>
+        <option value="${PRIMARY_LTC}">★ Primary LTC (${PRIMARY_LTC.slice(0, 10)}...)</option>
+        <option value="${PRIMARY_UPI}">★ Primary UPI (${PRIMARY_UPI})</option>
+      `;
+
+      savedContacts.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.address;
+        opt.textContent = `${c.type.toUpperCase()}: ${c.alias} (${c.address.slice(0, 10)}...)`;
+        quickSelect.appendChild(opt);
+      });
+
+      if (savedContacts.length === 0) {
+        container.innerHTML = `<div class="col-span-full py-3 text-xs font-mono text-pink-400/50 text-center">No secondary contacts saved yet.</div>`;
+        return;
+      }
+
+      container.innerHTML = savedContacts.map((c, idx) => `
+        <div class="cyber-card p-3 rounded-2xl flex items-center justify-between gap-2 border border-cyberpink-900/60 hover:border-cyberpink-500 transition">
+          <div class="overflow-hidden">
+            <div class="flex items-center gap-1.5">
+              <span class="text-[9px] font-mono font-bold uppercase px-1.5 py-0.2 rounded bg-obsidian-900 border border-cyberpink-700 text-cyberpink-400">
+                ${c.type.toUpperCase()}
+              </span>
+              <span class="text-xs font-bold text-white truncate">${escapeHtml(c.alias)}</span>
+            </div>
+            <div class="text-[11px] font-mono text-pink-400/60 truncate mt-0.5">${escapeHtml(c.address)}</div>
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            <button onclick="inspectAddress('${escapeHtml(c.address)}', '${c.type}', '${escapeHtml(c.alias)}')" title="Inspect A-Z" class="p-1.5 rounded-lg bg-obsidian-900 text-cyberpink-400 hover:text-white transition">
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+            </button>
+            <button onclick="quickCopyAddress('${escapeHtml(c.address)}', '${escapeHtml(c.alias)}')" title="Copy" class="p-1.5 rounded-lg bg-obsidian-900 text-cyberpink-400 hover:text-white transition">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            </button>
+            <button onclick="deleteContact(${idx})" title="Delete" class="p-1.5 rounded-lg text-rose-500 hover:text-rose-300 transition">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    function openAddAddressModal() {
+      document.getElementById('modal-add-address').classList.remove('hidden');
+      document.getElementById('modal-add-address').classList.add('flex');
+    }
+
+    function handleSaveAddress(e) {
+      e.preventDefault();
+      const type = document.getElementById('new-addr-type').value;
+      const alias = document.getElementById('new-addr-alias').value.trim();
+      const address = document.getElementById('new-addr-val').value.trim();
+
+      if (!alias || !address) return;
+
+      savedContacts.push({ type, alias, address });
+      saveContactsStorage();
+      renderSavedContacts();
+
+      closeModal('modal-add-address');
+      playSuccessChime();
+      showToast('Contact Saved', `${alias} added to Address Book`);
+      document.getElementById('new-addr-alias').value = '';
+      document.getElementById('new-addr-val').value = '';
+    }
+
+    function deleteContact(idx) {
+      savedContacts.splice(idx, 1);
+      saveContactsStorage();
+      renderSavedContacts();
+      showToast('Removed', 'Contact removed from storage');
+    }
+
+    // ============================================
+    // UNIVERSAL SEARCH SYSTEM
+    // ============================================
+    function executeSearch() {
+      const query = document.getElementById('search-input').value.trim();
+      if (!query) {
+        showToast('Empty Search', 'Please enter a Litecoin address or UPI handle');
+        return;
+      }
+
+      const isUpi = query.includes('@');
+      const type = isUpi ? 'upi' : 'ltc';
+
+      inspectAddress(query, type, isUpi ? 'Custom UPI Query' : 'Searched LTC Address');
+      playCyberBeep(740, 0.15);
+    }
+
+    function pickSavedAddress(val) {
+      if (!val) return;
+      document.getElementById('search-input').value = val;
+      const isUpi = val.includes('@');
+      inspectAddress(val, isUpi ? 'upi' : 'ltc', 'Selected Address');
+    }
+
+    function clearSearchInput() {
+      document.getElementById('search-input').value = '';
+    }
+
+    function switchMainView(type) {
+      const ltcBtn = document.getElementById('view-toggle-ltc');
+      const upiBtn = document.getElementById('view-toggle-upi');
+
+      if (type === 'ltc') {
+        ltcBtn.className = 'px-3 py-1 rounded-lg text-xs font-mono font-bold bg-cyberpink-600 text-white shadow-pink-glow-sm transition';
+        upiBtn.className = 'px-3 py-1 rounded-lg text-xs font-mono font-bold text-pink-400 hover:text-white transition';
+        inspectAddress(PRIMARY_LTC, 'ltc', 'Primary Litecoin ID');
+      } else {
+        upiBtn.className = 'px-3 py-1 rounded-lg text-xs font-mono font-bold bg-cyberpink-600 text-white shadow-pink-glow-sm transition';
+        ltcBtn.className = 'px-3 py-1 rounded-lg text-xs font-mono font-bold text-pink-400 hover:text-white transition';
+        inspectAddress(PRIMARY_UPI, 'upi', 'Primary UPI / INR ID');
+      }
+    }
+
+    // ============================================
+    // A-TO-Z BLOCKCHAIN & LEDGER INSPECTOR
+    // ============================================
+    async function inspectAddress(addr, type, customLabel = '') {
+      currentInspected.address = addr;
+      currentInspected.type = type;
+      currentInspected.label = customLabel || (type === 'ltc' ? 'Litecoin Address' : 'UPI ID');
+
+      document.getElementById('inspect-type-pill').textContent = type.toUpperCase() + (type === 'ltc' ? ' BLOCKCHAIN' : ' LOCAL LEDGER');
+      document.getElementById('inspect-label').textContent = currentInspected.label;
+      document.getElementById('inspect-address').textContent = addr;
+
+      const upiSection = document.getElementById('upi-parser-section');
+      const extBtn = document.getElementById('inspect-external-btn');
+
+      if (type === 'ltc') {
+        upiSection.classList.add('hidden');
+        extBtn.classList.remove('hidden');
+        await fetchLtcBlockchainLogs(addr);
+      } else {
+        upiSection.classList.remove('hidden');
+        extBtn.classList.add('hidden');
+        loadUpiLogs(addr);
+      }
+
+      lucide.createIcons();
+    }
+
+    function reloadCurrentInspection() {
+      const spinner = document.getElementById('inspect-reload-spin');
+      if (spinner) spinner.classList.add('animate-spin');
+      inspectAddress(currentInspected.address, currentInspected.type, currentInspected.label)
+        .finally(() => {
+          if (spinner) spinner.classList.remove('animate-spin');
+          showToast('Updated', 'Logs refreshed from source');
+        });
+    }
+
+    async function fetchLtcBlockchainLogs(addr, isSilentPoll = false) {
+      if (!isSilentPoll) {
+        document.getElementById('stat-balance').innerHTML = `... <span class="text-xs text-cyberpink-400">LTC</span>`;
+        document.getElementById('stat-balance-fiat-primary').textContent = `Calculating...`;
+        document.getElementById('stat-received').textContent = `...`;
+        document.getElementById('stat-hold').textContent = `...`;
+        document.getElementById('stat-sent').textContent = `...`;
+      }
+
+      let data = null;
+
+      try {
+        const res = await fetch(`https://api.blockcypher.com/v1/ltc/main/addrs/${addr}/full?limit=50`);
+        if (res.ok) {
+          const raw = await res.json();
+          data = parseBlockcypher(raw, addr);
+        } else {
+          throw new Error('BlockCypher failed');
+        }
+      } catch (err) {
+        try {
+          const bcRes = await fetch(`https://api.blockchair.com/litecoin/dashboards/address/${addr}?transaction_details=true`);
+          if (bcRes.ok) {
+            const rawBc = await bcRes.json();
+            data = parseBlockchair(rawBc, addr);
+          }
+        } catch (e) {
+          console.warn('Blockchair fallback warning:', e);
+        }
+      }
+
+      if (!data) {
+        data = {
+          balance: 0,
+          received: 0,
+          sent: 0,
+          hold: 0,
+          txs: []
+        };
+      }
+
+      // Detect Fresh Incoming/Outgoing Payment During Polling
+      if (isSilentPoll && lastKnownLtcTxCount !== null && data.txs.length > lastKnownLtcTxCount) {
+        playSuccessChime();
+        fireNeonConfetti();
+        showToast('Fresh LTC Payment Detected!', `New blockchain transaction on ${addr.slice(0, 8)}...`);
+      }
+      lastKnownLtcTxCount = data.txs.length;
+
+      inspectedLogs = data.txs;
+      lastInspectedLtcStats = {
+        balance: data.balance,
+        received: data.received,
+        sent: data.sent,
+        hold: data.hold
+      };
+
+      document.getElementById('stat-balance').innerHTML = `${data.balance.toFixed(4)} <span class="text-xs text-cyberpink-400">LTC</span>`;
+      document.getElementById('stat-received').textContent = `+${data.received.toFixed(4)}`;
+      document.getElementById('stat-received-sub').textContent = `${data.txs.filter(t => t.type === 'received').length} confirmed credits`;
+
+      document.getElementById('stat-hold').textContent = `${data.hold.toFixed(4)}`;
+      document.getElementById('stat-hold-sub').textContent = `${data.txs.filter(t => t.type === 'hold').length} in mempool`;
+
+      document.getElementById('stat-sent').textContent = `-${data.sent.toFixed(4)}`;
+      document.getElementById('stat-sent-sub').textContent = `${data.txs.filter(t => t.type === 'sent').length} outbound debits`;
+
+      renderCurrentStatsValues();
+      renderLogs();
+    }
+
+    function parseBlockcypher(raw, targetAddr) {
+      const sat = 100000000;
+      const balance = (raw.final_balance || 0) / sat;
+      const received = (raw.total_received || 0) / sat;
+      const sent = (raw.total_sent || 0) / sat;
+      const unconfirmed = (raw.unconfirmed_balance || 0) / sat;
+
+      const txs = (raw.txs || []).map(t => {
+        let inSat = 0;
+        let outSat = 0;
+
+        (t.outputs || []).forEach(o => {
+          if ((o.addresses || []).includes(targetAddr)) inSat += o.value;
+        });
+        (t.inputs || []).forEach(i => {
+          if ((i.addresses || []).includes(targetAddr)) outSat += i.output_value;
+        });
+
+        const isCredit = inSat >= outSat;
+        const net = isCredit ? (inSat - outSat) / sat : (outSat - inSat) / sat;
+        const confs = t.confirmations || 0;
+
+        let type = isCredit ? 'received' : 'sent';
+        if (confs === 0) type = 'hold';
+
+        return {
+          id: t.hash,
+          ref: t.hash,
+          type: type,
+          confs: confs,
+          amount: Math.abs(net),
+          unit: 'LTC',
+          note: confs === 0 ? 'Mempool Unconfirmed (0-conf)' : (isCredit ? 'Confirmed Blockchain Credit' : 'Outbound Debit'),
+          timestamp: t.received ? new Date(t.received).toISOString() : new Date().toISOString()
+        };
+      });
+
+      return { balance, received, sent, hold: unconfirmed, txs };
+    }
+
+    function parseBlockchair(raw, targetAddr) {
+      const sat = 100000000;
+      const addrData = raw.data[targetAddr];
+      if (!addrData) return null;
+
+      const addrInfo = addrData.address;
+      const txs = (addrData.transactions || []).map(t => {
+        const net = Math.abs(t.balance_change) / sat;
+        const isCredit = t.balance_change > 0;
+        return {
+          id: t.hash,
+          ref: t.hash,
+          type: isCredit ? 'received' : 'sent',
+          confs: 6,
+          amount: net,
+          unit: 'LTC',
+          note: isCredit ? 'Confirmed On-Chain Credit' : 'Outbound Transfer',
+          timestamp: t.time ? new Date(t.time).toISOString() : new Date().toISOString()
+        };
+      });
+
+      return {
+        balance: (addrInfo.balance || 0) / sat,
+        received: (addrInfo.received || 0) / sat,
+        sent: (addrInfo.spent || 0) / sat,
+        hold: 0,
+        txs
+      };
+    }
+
+    function loadUpiLogs(upiAddr) {
+      const records = upiDatabase[upiAddr] || [];
+      inspectedLogs = records.map(r => ({ ...r, unit: 'INR' }));
+
+      let rec = 0, recC = 0;
+      let hold = 0, holdC = 0;
+      let sent = 0, sentC = 0;
+
+      records.forEach(r => {
+        if (r.type === 'received') { rec += r.amount; recC++; }
+        else if (r.type === 'hold') { hold += r.amount; holdC++; }
+        else if (r.type === 'sent') { sent += r.amount; sentC++; }
+      });
+
+      const netInr = rec - sent;
+      const netUsd = netInr / 85.0; // Reference USD conversion for UPI
+
+      document.getElementById('stat-balance').innerHTML = `₹${netInr.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+      document.getElementById('stat-balance-fiat-primary').textContent = `≈ $${netUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
+      document.getElementById('stat-balance-fiat-secondary').textContent = `Net settlement ledger`;
+
+      document.getElementById('stat-received').textContent = `₹${rec.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+      document.getElementById('stat-received-fiat').textContent = `≈ $${(rec / 85).toFixed(2)} USD`;
+      document.getElementById('stat-received-sub').textContent = `${recC} credits`;
+
+      document.getElementById('stat-hold').textContent = `₹${hold.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+      document.getElementById('stat-hold-fiat').textContent = `≈ $${(hold / 85).toFixed(2)} USD`;
+      document.getElementById('stat-hold-sub').textContent = `${holdC} pending verification`;
+
+      document.getElementById('stat-sent').textContent = `₹${sent.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+      document.getElementById('stat-sent-fiat').textContent = `≈ $${(sent / 85).toFixed(2)} USD`;
+      document.getElementById('stat-sent-sub').textContent = `${sentC} debits`;
+
+      renderLogs();
+    }
+
+    // ============================================
+    // LOG RENDERING & FILTERS WITH DUAL USD & INR
+    // ============================================
+    function filterLogs(status) {
+      currentLogFilter = status;
+      document.querySelectorAll('.log-filter-btn').forEach(b => {
+        if (b.dataset.filter === status) {
+          b.className = 'log-filter-btn px-2.5 py-1 rounded-lg bg-cyberpink-600 text-white font-bold';
+        } else {
+          b.className = 'log-filter-btn px-2.5 py-1 rounded-lg bg-obsidian-900 text-pink-400 hover:text-white font-bold';
+        }
+      });
+      renderLogs();
+    }
+
+    function renderLogs() {
+      const container = document.getElementById('logs-container');
+      const emptyBox = document.getElementById('logs-empty');
+
+      let filtered = inspectedLogs.filter(l => currentLogFilter === 'all' || l.type === currentLogFilter);
+
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        emptyBox.classList.remove('hidden');
+        return;
+      }
+      emptyBox.classList.add('hidden');
+
+      container.innerHTML = filtered.map(item => {
+        const timeAgo = formatTimeAgo(new Date(item.timestamp));
+        const isLtc = item.unit === 'LTC';
+
+        let badgeStyle = 'border-emerald-600 bg-emerald-950/60 text-emerald-400';
+        let badgeText = 'Received';
+        let sign = '+';
+        let amtColor = 'text-emerald-400';
+
+        if (item.type === 'hold') {
+          badgeStyle = 'border-amber-600 bg-amber-950/60 text-amber-400 animate-pulse';
+          badgeText = isLtc ? `Hold (${item.confs || 0} conf)` : 'On Hold';
+          sign = '⏳ ';
+          amtColor = 'text-amber-400';
+        } else if (item.type === 'sent') {
+          badgeStyle = 'border-rose-600 bg-rose-950/60 text-rose-400';
+          badgeText = 'Sent';
+          sign = '-';
+          amtColor = 'text-rose-400';
+        }
+
+        // Dual currency calculation per transaction
+        let primaryAmtDisplay = '';
+        let fiatConversionDisplay = '';
+
+        if (isLtc) {
+          primaryAmtDisplay = `${sign}${item.amount.toFixed(4)} LTC`;
+          const conv = convertLtcToFiat(item.amount);
+          // Show both USD ($) and INR (₹) side-by-side or highlight based on active toggle
+          fiatConversionDisplay = activeCurrency === 'usd'
+            ? `<span class="text-cyberpink-300 font-bold">${conv.usdFormatted}</span> <span class="text-pink-400/50">(${conv.inrFormatted})</span>`
+            : `<span class="text-emerald-400 font-bold">${conv.inrFormatted}</span> <span class="text-pink-400/50">(${conv.usdFormatted})</span>`;
+        } else {
+          primaryAmtDisplay = `${sign}₹${Number(item.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+          fiatConversionDisplay = `<span class="text-cyberpink-300 font-bold">≈ $${(Number(item.amount) / 85).toFixed(2)} USD</span>`;
+        }
+
+        return `
+          <div class="cyber-card p-3 sm:p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border border-cyberpink-900/50 hover:border-cyberpink-500/70 transition">
+            <div class="overflow-hidden space-y-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs sm:text-sm font-black text-white truncate">${escapeHtml(item.note)}</span>
+                <span class="text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${badgeStyle}">${badgeText}</span>
+              </div>
+              <div class="flex items-center gap-2 text-[10px] font-mono text-pink-400/60">
+                <span>${timeAgo}</span>
+                <span>•</span>
+                <span class="truncate max-w-[150px] sm:max-w-[280px]">${item.ref}</span>
+                <button onclick="quickCopyText('${item.ref}', 'Hash Copied')" class="hover:text-cyberpink-400 transition">
+                  <i data-lucide="copy" class="w-3 h-3"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto border-t sm:border-t-0 pt-2 sm:pt-0 border-cyberpink-900/60">
+              <div class="text-left sm:text-right font-mono">
+                <div class="text-sm sm:text-base font-black ${amtColor}">
+                  ${primaryAmtDisplay}
+                </div>
+                <div class="text-[11px] font-mono mt-0.5">
+                  ${fiatConversionDisplay}
+                </div>
+              </div>
+              ${!isLtc && item.type === 'hold' ? `
+                <button onclick="releaseUpiHold('${item.id}')" class="px-2 py-1 rounded-lg text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950 border border-emerald-700 hover:bg-emerald-900 transition">
+                  Release
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function releaseUpiHold(id) {
+      const list = upiDatabase[currentInspected.address] || [];
+      const target = list.find(r => r.id === id);
+      if (target) {
+        target.type = 'received';
+        saveUpiStorage();
+        loadUpiLogs(currentInspected.address);
+        playSuccessChime();
+        showToast('Hold Released', 'Payment converted to Confirmed Received');
+      }
+    }
+
+    // ============================================
+    // UPI SMS & MANUAL ENTRIES
+    // ============================================
+    function parseAndLogSms() {
+      const input = document.getElementById('sms-input-box');
+      const text = input.value.trim();
+      if (!text) {
+        showToast('Empty', 'Paste a bank alert SMS message');
+        return;
+      }
+
+      const amtMatch = text.match(/(?:rs\.?|inr|credited by|debited by)\s*[:.]?\s*([\d,]+(?:\.\d{1,2})?)/i);
+      const utrMatch = text.match(/(?:upi\/|utr|ref|rrn|txn)[:\s-]*([0-9a-zA-Z]{8,22})/i);
+      const isDebit = /debited|sent|spent|paid/i.test(text);
+      const isHold = /on hold|pending|processing/i.test(text);
+
+      if (!amtMatch) {
+        showToast('Parsing Failed', 'Could not detect amount in SMS.');
+        return;
+      }
+
+      const amount = parseFloat(amtMatch[1].replace(/,/g, ''));
+      const ref = utrMatch ? utrMatch[1] : 'UPI/' + Math.floor(100000000000 + Math.random() * 900000000000);
+
+      let type = 'received';
+      if (isHold) type = 'hold';
+      else if (isDebit) type = 'sent';
+
+      const entry = {
+        id: 'upi_' + Date.now(),
+        type: type,
+        amount: amount,
+        note: `Auto-SMS: ${text.slice(0, 32)}...`,
+        ref: ref,
+        timestamp: new Date().toISOString()
+      };
+
+      const targetUpi = currentInspected.type === 'upi' ? currentInspected.address : PRIMARY_UPI;
+      if (!upiDatabase[targetUpi]) upiDatabase[targetUpi] = [];
+      upiDatabase[targetUpi].unshift(entry);
+
+      saveUpiStorage();
+      if (currentInspected.address === targetUpi) loadUpiLogs(targetUpi);
+
+      input.value = '';
+      playSuccessChime();
+      fireNeonConfetti();
+      showToast('Logged to UPI', `₹${amount} recorded as ${type.toUpperCase()}`);
+    }
+
+    function openManualUpiModal() {
+      document.getElementById('modal-manual-upi').classList.remove('hidden');
+      document.getElementById('modal-manual-upi').classList.add('flex');
+    }
+
+    function handleManualUpiSubmit(e) {
+      e.preventDefault();
+      const type = document.querySelector('input[name="manual-upi-type"]:checked').value;
+      const amount = parseFloat(document.getElementById('manual-upi-amount').value);
+      const note = document.getElementById('manual-upi-note').value.trim();
+      let ref = document.getElementById('manual-upi-ref').value.trim();
+
+      if (!ref) ref = 'UPI/' + Math.floor(100000000000 + Math.random() * 900000000000);
+
+      const entry = {
+        id: 'upi_' + Date.now(),
+        type: type,
+        amount: amount,
+        note: note,
+        ref: ref,
+        timestamp: new Date().toISOString()
+      };
+
+      const targetUpi = currentInspected.type === 'upi' ? currentInspected.address : PRIMARY_UPI;
+      if (!upiDatabase[targetUpi]) upiDatabase[targetUpi] = [];
+      upiDatabase[targetUpi].unshift(entry);
+
+      saveUpiStorage();
+      if (currentInspected.address === targetUpi) loadUpiLogs(targetUpi);
+
+      closeModal('modal-manual-upi');
+      playSuccessChime();
+      showToast('Manual Entry Saved', `${note} logged`);
+      document.getElementById('manual-upi-amount').value = '';
+      document.getElementById('manual-upi-note').value = '';
+    }
+
+    // ============================================
+    // FAST 2-SECOND COPY & TOASTS
+    // ============================================
+    function quickCopyAddress(text, name) {
+      playSuccessChime();
+      fireNeonConfetti();
+      copyToClipboard(text, `${name.toUpperCase()} COPIED!`, text);
+    }
+
+    function quickCopyText(text, label) {
+      playCyberBeep(980, 0.1);
+      copyToClipboard(text, label, text);
+    }
+
+    function copyCurrentInspected() {
+      quickCopyAddress(currentInspected.address, 'Inspected Target');
+    }
+
+    function copyToClipboard(text, title, msg) {
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => showToast(title, msg)).catch(() => fallbackCopy(text, title, msg));
+      } else {
+        fallbackCopy(text, title, msg);
+      }
+    }
+
+    function fallbackCopy(text, title, msg) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        showToast(title, msg);
+      } catch (e) {
+        showToast('Notice', text);
+      }
+      document.body.removeChild(ta);
+    }
+
+    function showToast(title, msg) {
+      const toast = document.getElementById('cyber-toast');
+      document.getElementById('toast-title').textContent = title;
+      document.getElementById('toast-msg').textContent = msg;
+
+      toast.classList.remove('opacity-0', '-translate-y-28', 'pointer-events-none');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', '-translate-y-28', 'pointer-events-none');
+      }, 2400);
+    }
+
+    // ============================================
+    // QR SYSTEM & EXTERNAL EXPLORER
+    // ============================================
+    function openQrView(val, title) {
+      activeQrValue = val;
+      const modal = document.getElementById('modal-qr');
+      document.getElementById('qr-title').textContent = title;
+      document.getElementById('qr-val-text').textContent = val;
+
+      const container = document.getElementById('qr-target-box');
+      container.innerHTML = '';
+
+      new QRCode(container, {
+        text: val,
+        width: 180,
+        height: 180,
+        colorDark: "#ff007f", // Neon Pink QR modules
+        colorLight: "#050308", // Pitch black QR background
+        correctLevel: QRCode.CorrectLevel.M
+      });
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function copyQrVal() {
+      quickCopyText(activeQrValue, 'QR Address Copied');
+    }
+
+    function openExternalExplorer() {
+      window.open(`https://blockchair.com/litecoin/address/${currentInspected.address}`, '_blank');
+    }
+
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.add('hidden');
+        el.classList.remove('flex');
+      }
+    }
+
+    // ============================================
+    // LIVE DUAL COINGECKO PRICE FEED (USD & INR)
+    // ============================================
+    async function fetchLtcPrice() {
+      try {
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=litecoin&vs_currencies=usd,inr');
+        if (res.ok) {
+          const d = await res.json();
+          if (d.litecoin) {
+            if (d.litecoin.usd) ltcUsdPrice = d.litecoin.usd;
+            if (d.litecoin.inr) ltcInrPrice = d.litecoin.inr;
+
+            const tickerText = `1 LTC ≈ $${ltcUsdPrice.toFixed(2)} USD | ₹${ltcInrPrice.toLocaleString('en-IN')} INR`;
+            const tickerEl = document.getElementById('price-ticker-text');
+            if (tickerEl) tickerEl.textContent = tickerText;
+
+            renderCurrentStatsValues();
+            renderLogs();
+          }
+        }
+      } catch (e) {
+        console.warn('CoinGecko fetch failed, using fallback pricing:', e);
+      }
+    }
+
+    function formatTimeAgo(date) {
+      if (isNaN(date.getTime())) return 'Recently';
+      const s = Math.floor((new Date() - date) / 1000);
+      if (s < 60) return 'Just now';
+      const m = Math.floor(s / 60);
+      if (m < 60) return `${m}m ago`;
+      const h = Math.floor(m / 60);
+      if (h < 24) return `${h}h ago`;
+      return `${Math.floor(h / 24)}d ago`;
+    }
+
+    function escapeHtml(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+  </script>
+</body>
+</html>
